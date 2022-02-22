@@ -2,7 +2,7 @@
 #ModLog : 11/22/2020 Using R functins for Visualization and data analysis
 
 remove(list = ls())
-setwd("C:/RLab/RStudentLab")
+setwd("C:/GopalC/RLab/RStudentLab")
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
@@ -15,27 +15,23 @@ library(scatterplot3d)
 library(MASS)
 library(rgl)
 
+
 sort(unique(odbcListDrivers()[[1]]))
 ##conn is a DBIConnection
 conn <- dbConnect(odbc(),
-                  Driver = "SQL Server", 
-                  Server = "LT-GCHAKRA",  
+                  Driver = "SQL Server",
+                  Server = "DESKTOP-NCM7OON\\SQLEXPRESS",  
                   Port = 1433,
                   Database = "R_Db", 
                   Trusted_Connection = "True")
 
-odbcListObjects(conn)
-odbcListObjects(conn, catalog="R_Db", schema="dbo")
-odbcListObjects(conn, catalog="R_Db", schema="dbo", type="table")
-odbcListObjects(conn, catalog="R_Db", schema="dbo", type="view")
-odbcListObjects(conn, catalog="R_Db", schema="dbo", name="vw_studentRpt")
-odbcListObjects(conn, catalog="R_Db", schema="dbo", view="vw_studentRpt")
-odbcListObjectTypes(conn)
-dbListFields(conn, "vw_studentRpt")
-res1 <- dbSendQuery(conn,"SELECT student_name,subject_name,marks FROM vw_studentRpt")
-data <- dbFetch(res1)
-##res <- dbGetQuery(conn, "SELECT student_name,subject_name,marks FROM vw_studentRpt")
-dbDisconnect(conn)
+
+odbcListObjects(conn, catalog="R_Db", schema="dbo", name="student")
+dbListFields(conn, "student")
+##res <- dbSendQuery(conn,"SELECT student_name,subject_name,marks FROM student")
+##data <- dbFetch(res, n=-1)
+res <- dbGetQuery(conn, "SELECT student_name,subject_name,marks FROM student")
+
 
 resultsByStudent <- res %>% group_by(student_name) %>% summarise(
   mean = mean(marks),
@@ -43,22 +39,10 @@ resultsByStudent <- res %>% group_by(student_name) %>% summarise(
   mode = Mode(marks)
 )
 
- # persp(res$student_name,res$subject_name, res$marks,
- #       main="Student Performance  Perspective",
- #       zlab= "Marks",
- #       theta = 30, phi=15,
- #       col = "springgreen", shade = 0.5)
 
-# with(data = res,
-#      scatterplot3d(x = res[,student_name],
-#                    y = res[,subject_name],
-#                    z = res[,marks],
-#      )
-# )
-
-pdf(file = "resultsByStudent.pdf",   # The directory you want to save the file in
-    width = 10, # The width of the plot in inches
-    height = 8) # The height of the plot in inches
+# pdf(file = "resultsByStudent.pdf",   # The directory you want to save the file in
+#     width = 10, # The width of the plot in inches
+#     height = 8) # The height of the plot in inches
 
 
 plot(resultsByStudent$mean, 
@@ -80,16 +64,13 @@ legend("topleft",
        pch = 21
        )
 
-dev.off()
+#dev.off()
 
-write.csv(resultsByStudent, 
-          row.names = F,
-          file = "resultsByStudent.csv")
-write.csv(res, 
-          row.names = F,
-          file = "rawStudentData.csv")
+#write.csv(resultsByStudent, row.names = F,  file = "resultsByStudent.csv")
+#write.csv(res, row.names = F, file = "rawStudentData.csv")
 
 print(res,quote = FALSE, row.names = FALSE)
 
-dbClearResult(res1)
+##dbClearResult(res)
+dbDisconnect(conn)
 
